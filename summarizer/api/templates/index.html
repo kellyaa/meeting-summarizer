@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Transcript Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 40px;
+        }
+        .transcript-summary {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .spinner-wrapper {
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1 class="text-center mb-4">Meeting Transcript Manager</h1>
+
+        <!-- Upload Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload a New Transcript</h5>
+                <form id="upload-form" action="/transcripts" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input type="file" name="transcript" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+                <!-- Spinner -->
+                <div id="spinner" class="spinner-wrapper mt-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Uploading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcript List and Summary Display -->
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Transcript List -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Available Transcripts</h5>
+                        <div class="table-wrapper">
+                            {% if transcripts %}
+                            <ul class="list-group list-group-flush">
+                                {% for transcript in transcripts %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <a href="javascript:void(0);" data-transcript-id="{{ transcript['id'] }}" class="load-transcript">
+                                        {{ transcript['date_created'] }}
+                                    </a><br/>
+                                    <div class="d-flex">
+                                        <button class="btn btn-sm btn-danger delete-transcript ms-2" data-transcript-id="{{ transcript['id'] }}">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                        <form enctype="multipart/form-data" class="ms-2">
+                                            <input type="file" name="transcript" class="form-control form-control-sm">
+                                            <button class="btn btn-sm btn-success update-transcript mt-2" data-transcript-id="{{ transcript['id'] }}">
+                                                <i class="fa fa-upload"></i> Update
+                                            </button>
+                                        </form>                                        
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p>No transcripts available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- Transcript Summary -->
+                <div class="card">
+                    <div class="card-body transcript-summary">
+                        <h5 class="card-title">Transcript Summary</h5>
+                        <div id="transcript-summary" markdown="1">
+                            <p>Select a transcript to view its summary.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('upload-form');
+            const spinner = document.getElementById('spinner');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevent the default form submission
+                const formData = new FormData(this);
+
+                // Show the spinner
+                spinner.style.display = 'flex';
+
+                // Submit the form using Fetch API
+                fetch('/transcripts', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Redirect to the index page after upload
+                        window.location.href = '/';
+                    } else {
+                        alert('Upload failed. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    // Hide the spinner once the request is complete
+                    spinner.style.display = 'none';
+                });
+            });
+
+            // Handle loading transcript summaries
+            const transcriptLinks = document.querySelectorAll('.load-transcript');
+            transcriptLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const transcriptId = link.getAttribute('data-transcript-id');
+                    fetch('/transcripts/' + transcriptId)
+                        .then(response => response.json())
+                        .then(data => {
+                            const summaryDiv = document.getElementById('transcript-summary');
+                            summaryDiv.innerHTML = `<h4>Summary</h4><p>${data['summary']}</p><p><a href="/transcripts/${transcriptId}">Read Full Transcript...</a></p>`;
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
+            });
+
+            // Handle delete and update actions
+            const deleteButtons = document.querySelectorAll('.delete-transcript');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const transcriptId = this.getAttribute('data-transcript-id');
+                    fetch(`/transcripts/${transcriptId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            });
+            const updateButtons = document.querySelectorAll('.update-transcript');
+            updateButtons.forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const transcriptId = this.getAttribute('data-transcript-id');
+                    const form = this.closest('form');
+                    const formData = new FormData(form);  // Correctly gather the form data
+
+                    fetch(`/transcripts/${transcriptId}`, {
+                        method: 'PUT',  // Use PUT method for updating
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();  // Reload the page after successful update
+                        } else {
+                            alert('Update failed. Please try again.');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            });
+        });
+    </script>
+</body>
+</html>
