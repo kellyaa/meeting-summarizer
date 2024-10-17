@@ -86,7 +86,7 @@ def create_transcript():
         }
         redis_client.hset(name=transcript_id, mapping=transcript_entry)
         logger.info(f"Created new transcript with id: {transcript_id}")
-        return jsonify({'message': 'Transcript created'})
+        return jsonify({'message': 'Transcript created', 'id': transcript_id})
     except Exception as e:
         logger.error(f"Error creating transcript: {e}")
         return "Error creating transcript", 500
