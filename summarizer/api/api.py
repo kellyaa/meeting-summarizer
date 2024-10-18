@@ -15,7 +15,7 @@ redis_client = redis.Redis(host='localhost', port=6379, db=0, charset="utf-8", d
 
 # Set up environment variables for OLLMALA_URL and MODEL
 OLLMALA_URL = os.getenv('OLLMALA_URL') or "http://localhost:11434"
-MODEL = os.getenv('MODEL') or "granite-3:3b"
+MODEL = os.getenv('MODEL') or "granite3-dense"
 SUMMARIZE_PROMPT = "The following is a meeting transcript. Write in Markdown format a bulleted list of all the points of discusion during the meeting. Do not skip any themes of discussion. \n\n Here is the meeting transcript: \n\n"
 
 # Define the app
@@ -196,5 +196,5 @@ def delete_transcript(transcript_id):
 
 if __name__ == '__main__':
     # Run the app in debug mode
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
 

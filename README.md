@@ -1,3 +1,15 @@
+This Meeting Transcript Summarizer is a pet project I built as part of a writing the following tutorial: [Developing a gen AI application using IBM Granite Code](https://developer.ibm.com/tutorials/awb-developing-gen-ai-app-ibm-granite-code/).
+
+The code in this repo is a mixture of hand-written and AI generated code. It's here for those of you who are wondering how the application was built and for anyone who wants to use it as a starting point for their own project.
+
+It uses a Flask API, with an HTML/JavaScript UI and a Redis datastore. AI inferencing to generate the meeting transcripts is accomplished via the Ollama API.
+
+## Pre-requisites
+1. A running [Ollama](https://ollama.com/) instance.
+2. A running Redis instance.
+
+## Application Setup
+
 Here is an overview of how the Meeting Transcript Manager can be used to summarize meeting transcripts using AI:
 
 1. Install required packages with pip:
